@@ -3,13 +3,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY worker/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the same generated protobuf files and the main worker code.
 COPY ../query_pb2.py .
 COPY ../query_pb2_grpc.py .
-COPY main.py .
+COPY worker/main.py .
 
 # The gRPC server will listen on this port inside the container.
 EXPOSE 50051

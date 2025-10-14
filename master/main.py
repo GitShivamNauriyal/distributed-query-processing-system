@@ -31,7 +31,7 @@ def run_query():
             print("Received response from worker:")
             print(response.result_json)
         except grpc.RpcError as e:
-            print(f"Could not connect to the worker: {e.status()}")
+            print(f"Could not connect to the worker: {e}")
 
 if __name__ == '__main__':
     # Give the workers a moment to start up before the master tries to connect.
