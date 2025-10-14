@@ -1,0 +1,32 @@
+syntax = "proto3";
+package query;
+
+// Service for API Gateway -> Master communication
+service MasterService {
+  rpc ExecuteQuery(QueryRequest) returns (QueryResponse);
+}
+
+// Service for Master -> Worker communication
+service QueryService {
+  rpc ExecuteSubQuery(SubQueryRequest) returns (PartialResult);
+}
+
+// === Messages for Gateway-Master ===
+message QueryRequest {
+  string sql = 1;
+}
+
+message QueryResponse {
+  string result_json = 1;
+  bool error = 2;
+  string error_message = 3;
+}
+
+// === Messages for Master-Worker ===
+message SubQueryRequest {
+  string query_sql = 1;
+}
+
+message PartialResult {
+  string result_json = 1;
+}

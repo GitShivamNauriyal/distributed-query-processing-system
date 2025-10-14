@@ -1,0 +1,20 @@
+# Use an official Node.js runtime
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy dependency definitions
+COPY api-gateway/package.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the shared gRPC protocol files into a 'protos' directory inside the container
+COPY query-engine/protos/ ./protos
+
+# Copy the gateway's source code into a 'src' directory inside the container
+COPY api-gateway/src/ ./src
+
+EXPOSE 8080
+CMD [ "npm", "start" ]
+

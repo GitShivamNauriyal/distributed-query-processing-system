@@ -5,8 +5,7 @@ import json
 from concurrent import futures
 
 # Import the generated gRPC classes
-import query_pb2
-import query_pb2_grpc
+from protos import query_pb2, query_pb2_grpc
 
 class QueryServicer(query_pb2_grpc.QueryServiceServicer):
     """

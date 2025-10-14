@@ -4,6 +4,9 @@ FROM python:3.12-slim
 # Set the working directory inside the container.
 WORKDIR /app
 
+# Add the protos directory to the Python path
+ENV PYTHONPATH "${PYTHONPATH}:/app:/app/protos"
+
 # Copy the requirements file into the container.
 COPY master/requirements.txt .
 
@@ -11,9 +14,9 @@ COPY master/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the generated protobuf files and the main application code.
-# The '..' means we are copying from the Docker build context's parent directory.
-COPY ../query_pb2.py .
-COPY ../query_pb2_grpc.py .
+COPY protos/ /app/protos
+
+# Copy the master's source code
 COPY master/main.py .
 
 # Command to run when the container starts.

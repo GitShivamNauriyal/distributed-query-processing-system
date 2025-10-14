@@ -1,8 +1,25 @@
 services:
+    # api-gateway:
+    #     build:
+    #         context: .
+    #         dockerfile: api-gateway/Dockerfile.gateway
+    #     ports:
+    #         # Exposes the gateway's HTTP port to your local machine
+    #         - "8080:8080"
+    #     networks:
+    #         - query_network
+    #     # This service waits for the master node to start
+    #     environment:
+    #         - IS_DOCKER=true
+    #     depends_on:
+    #         - master
+
+    # --- Master Node Service ---
     master:
         build:
-            context: .
+            context: ./query-engine
             dockerfile: master/Dockerfile.master
+        # The gRPC port is NOT exposed to the host, only to the internal network
         ports:
             - "50050:50050"
         networks:
@@ -13,9 +30,10 @@ services:
             worker2:
                 condition: service_started
 
+    # --- Worker Node 1 ---
     worker1:
         build:
-            context: .
+            context: ./query-engine
             dockerfile: worker/Dockerfile.worker
         ports:
             - "50051:50051"
@@ -27,9 +45,10 @@ services:
             db1:
                 condition: service_healthy
 
+    # --- Worker Node 2 ---
     worker2:
         build:
-            context: .
+            context: ./query-engine
             dockerfile: worker/Dockerfile.worker
         ports:
             - "50052:50051"
@@ -41,6 +60,7 @@ services:
             db2:
                 condition: service_healthy
 
+    # --- Database 1 ---
     db1:
         image: postgres:16
         environment:
@@ -59,6 +79,7 @@ services:
             timeout: 5s
             retries: 5
 
+    # --- Database 2 ---
     db2:
         image: postgres:16
         environment:
@@ -77,6 +98,7 @@ services:
             timeout: 5s
             retries: 5
 
+# --- Shared Network Definition ---
 networks:
     query_network:
         driver: bridge

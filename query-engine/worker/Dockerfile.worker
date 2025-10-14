@@ -3,14 +3,17 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Add the protos directory to the Python path
+ENV PYTHONPATH "${PYTHONPATH}:/app:/app/protos"
+
 COPY worker/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the same generated protobuf files and the main worker code.
-COPY ../query_pb2.py .
-COPY ../query_pb2_grpc.py .
-COPY worker/main.py .
+# Copy the entire protos package into the container
+COPY protos/ /app/protos
 
+# Copy the worker's source code
+COPY worker/main.py .
 # The gRPC server will listen on this port inside the container.
 EXPOSE 50051
 
