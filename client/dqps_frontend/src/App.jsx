@@ -6,14 +6,12 @@ function App() {
     const [results, setResults] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
-    // New state to force re-animation
     const [animationKey, setAnimationKey] = useState(0)
 
     const handleSubmitQuery = async (e) => {
         e.preventDefault()
         setIsLoading(true)
         setError("")
-        // No need to clear results here, AnimatePresence will handle the exit
         try {
             const response = await fetch("http://localhost:8080/query", {
                 method: "POST",
@@ -22,41 +20,40 @@ function App() {
             })
 
             const data = await response.json()
-            if (!response.ok) {
+            if (!response.ok || data.error) {
                 throw new Error(
-                    data.details ||
-                        data.error ||
-                        "An unknown server error occurred."
+                    data.error_message || "An error occurred on the server."
                 )
             }
             setResults(data)
-            // Increment the key on each successful query to re-trigger the animation
             setAnimationKey((prevKey) => prevKey + 1)
         } catch (err) {
             setError(err.message)
-            setResults([]) // Clear results on error
+            setResults([])
         } finally {
             setIsLoading(false)
         }
     }
 
     // Animation variants for the table container
-    const tableContainerVariants = {
-        hidden: { opacity: 0, scale: 0.98 },
+    const tableVariants = {
+        hidden: { opacity: 0 },
         visible: {
             opacity: 1,
-            scale: 1,
             transition: {
-                staggerChildren: 0.05, // Each child (row) will animate 0.05s after the previous one
+                staggerChildren: 0.03, // Each row will appear slightly after the one before
             },
         },
-        exit: { opacity: 0, scale: 0.98 },
     }
 
     // Animation variants for each table row
-    const tableRowVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 },
+    const rowVariants = {
+        hidden: { opacity: 0, y: 15 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: { type: "spring", stiffness: 300, damping: 24 },
+        },
     }
 
     const renderTable = () => {
@@ -66,7 +63,6 @@ function App() {
                     key="no-results"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
                     className="flex items-center justify-center h-full text-gray-500"
                 >
                     <p>No results to display.</p>
@@ -76,31 +72,31 @@ function App() {
         const headers = Object.keys(results[0])
 
         return (
-            <motion.div
-                // The key is now dynamic, forcing a re-mount on change
-                key={`results-table-${animationKey}`}
-                className="overflow-auto h-full rounded-lg border border-gray-700"
-                variants={tableContainerVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-            >
-                <table className="min-w-full text-sm text-left whitespace-nowrap">
-                    <thead className="sticky top-0 bg-gray-800 text-gray-300 uppercase tracking-wider">
+            // KEY CHANGE: This outer div is now the dedicated scroll container.
+            // It takes up the full height of its parent and will show a scrollbar if the table inside is too tall.
+            <div className="h-full overflow-auto rounded-lg border border-gray-700">
+                <motion.table
+                    key={`results-table-${animationKey}`}
+                    className="min-w-full text-sm text-left whitespace-nowrap"
+                    variants={tableVariants}
+                    initial="hidden"
+                    animate="visible"
+                >
+                    <thead className="sticky top-0 bg-gray-800 text-gray-300 uppercase tracking-wider z-10">
                         <tr>
                             {headers.map((header) => (
                                 <th key={header} className="p-4 font-semibold">
-                                    {header}
+                                    {header.replace(/_/g, " ")}
                                 </th>
                             ))}
                         </tr>
                     </thead>
-                    <motion.tbody className="divide-y divide-gray-700 bg-gray-900">
+                    <tbody className="divide-y divide-gray-700 bg-gray-900">
                         {results.map((row, rowIndex) => (
                             <motion.tr
                                 key={rowIndex}
                                 className="hover:bg-gray-800/50 transition-colors duration-150"
-                                variants={tableRowVariants}
+                                variants={rowVariants}
                             >
                                 {headers.map((header) => (
                                     <td
@@ -114,9 +110,9 @@ function App() {
                                 ))}
                             </motion.tr>
                         ))}
-                    </motion.tbody>
-                </table>
-            </motion.div>
+                    </tbody>
+                </motion.table>
+            </div>
         )
     }
 
@@ -187,7 +183,7 @@ function App() {
                     <h2 className="text-lg font-semibold mb-4 text-gray-300">
                         Results
                     </h2>
-                    <div className="relative flex-grow">
+                    <div className="relative flex-grow min-h-0">
                         <AnimatePresence mode="wait">
                             {isLoading ? (
                                 <motion.div

@@ -1,16 +1,13 @@
 services:
+    # --- API Gateway Service ---
     # api-gateway:
     #     build:
     #         context: .
     #         dockerfile: api-gateway/Dockerfile.gateway
     #     ports:
-    #         # Exposes the gateway's HTTP port to your local machine
     #         - "8080:8080"
     #     networks:
     #         - query_network
-    #     # This service waits for the master node to start
-    #     environment:
-    #         - IS_DOCKER=true
     #     depends_on:
     #         - master
 
@@ -19,18 +16,19 @@ services:
         build:
             context: ./query-engine
             dockerfile: master/Dockerfile.master
-        # The gRPC port is NOT exposed to the host, only to the internal network
         ports:
             - "50050:50050"
         networks:
             - query_network
         depends_on:
-            worker1:
-                condition: service_started
-            worker2:
-                condition: service_started
+            worker1: { condition: service_started }
+            worker2: { condition: service_started }
+            worker3: { condition: service_started }
+            worker4: { condition: service_started }
+            worker5: { condition: service_started }
+            worker6: { condition: service_started }
 
-    # --- Worker Node 1 ---
+    # --- WORKER NODES (1 to 6) ---
     worker1:
         build:
             context: ./query-engine
@@ -42,10 +40,8 @@ services:
         networks:
             - query_network
         depends_on:
-            db1:
-                condition: service_healthy
+            db1: { condition: service_healthy }
 
-    # --- Worker Node 2 ---
     worker2:
         build:
             context: ./query-engine
@@ -57,48 +53,169 @@ services:
         networks:
             - query_network
         depends_on:
-            db2:
-                condition: service_healthy
+            db2: { condition: service_healthy }
 
-    # --- Database 1 ---
+    worker3:
+        build:
+            context: ./query-engine
+            dockerfile: worker/Dockerfile.worker
+        ports:
+            - "50053:50051"
+        environment:
+            - DATABASE_HOST=db3
+        networks:
+            - query_network
+        depends_on:
+            db3: { condition: service_healthy }
+
+    worker4:
+        build:
+            context: ./query-engine
+            dockerfile: worker/Dockerfile.worker
+        ports:
+            - "50054:50051"
+        environment:
+            - DATABASE_HOST=db4
+        networks:
+            - query_network
+        depends_on:
+            db4: { condition: service_healthy }
+
+    worker5:
+        build:
+            context: ./query-engine
+            dockerfile: worker/Dockerfile.worker
+        ports:
+            - "50055:50051"
+        environment:
+            - DATABASE_HOST=db5
+        networks:
+            - query_network
+        depends_on:
+            db5: { condition: service_healthy }
+
+    worker6:
+        build:
+            context: ./query-engine
+            dockerfile: worker/Dockerfile.worker
+        ports:
+            - "50056:50051"
+        environment:
+            - DATABASE_HOST=db6
+        networks:
+            - query_network
+        depends_on:
+            db6: { condition: service_healthy }
+
+    # --- DATABASE NODES (1 to 6) ---
     db1:
         image: postgres:16
         environment:
-            POSTGRES_USER: user
-            POSTGRES_PASSWORD: password
-            POSTGRES_DB: distributed_db
-        volumes:
-            - ./db/init-db1.sql:/docker-entrypoint-initdb.d/init.sql
-        ports:
-            - "54321:5432"
-        networks:
-            - query_network
+            {
+                POSTGRES_USER: user,
+                POSTGRES_PASSWORD: password,
+                POSTGRES_DB: distributed_db,
+            }
+        volumes: ["./db/init-db1.sql:/docker-entrypoint-initdb.d/init.sql"]
+        networks: [query_network]
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U user -d distributed_db"]
-            interval: 5s
-            timeout: 5s
-            retries: 5
+            {
+                test: ["CMD-SHELL", "pg_isready -U user -d distributed_db"],
+                interval: 5s,
+                timeout: 5s,
+                retries: 5,
+            }
 
-    # --- Database 2 ---
     db2:
         image: postgres:16
         environment:
-            POSTGRES_USER: user
-            POSTGRES_PASSWORD: password
-            POSTGRES_DB: distributed_db
-        volumes:
-            - ./db/init-db2.sql:/docker-entrypoint-initdb.d/init.sql
-        ports:
-            - "54322:5432"
-        networks:
-            - query_network
+            {
+                POSTGRES_USER: user,
+                POSTGRES_PASSWORD: password,
+                POSTGRES_DB: distributed_db,
+            }
+        volumes: ["./db/init-db2.sql:/docker-entrypoint-initdb.d/init.sql"]
+        networks: [query_network]
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U user -d distributed_db"]
-            interval: 5s
-            timeout: 5s
-            retries: 5
+            {
+                test: ["CMD-SHELL", "pg_isready -U user -d distributed_db"],
+                interval: 5s,
+                timeout: 5s,
+                retries: 5,
+            }
 
-# --- Shared Network Definition ---
+    db3:
+        image: postgres:16
+        environment:
+            {
+                POSTGRES_USER: user,
+                POSTGRES_PASSWORD: password,
+                POSTGRES_DB: distributed_db,
+            }
+        volumes: ["./db/init-db3.sql:/docker-entrypoint-initdb.d/init.sql"]
+        networks: [query_network]
+        healthcheck:
+            {
+                test: ["CMD-SHELL", "pg_isready -U user -d distributed_db"],
+                interval: 5s,
+                timeout: 5s,
+                retries: 5,
+            }
+
+    db4:
+        image: postgres:16
+        environment:
+            {
+                POSTGRES_USER: user,
+                POSTGRES_PASSWORD: password,
+                POSTGRES_DB: distributed_db,
+            }
+        volumes: ["./db/init-db4.sql:/docker-entrypoint-initdb.d/init.sql"]
+        networks: [query_network]
+        healthcheck:
+            {
+                test: ["CMD-SHELL", "pg_isready -U user -d distributed_db"],
+                interval: 5s,
+                timeout: 5s,
+                retries: 5,
+            }
+
+    db5:
+        image: postgres:16
+        environment:
+            {
+                POSTGRES_USER: user,
+                POSTGRES_PASSWORD: password,
+                POSTGRES_DB: distributed_db,
+            }
+        volumes: ["./db/init-db5.sql:/docker-entrypoint-initdb.d/init.sql"]
+        networks: [query_network]
+        healthcheck:
+            {
+                test: ["CMD-SHELL", "pg_isready -U user -d distributed_db"],
+                interval: 5s,
+                timeout: 5s,
+                retries: 5,
+            }
+
+    db6:
+        image: postgres:16
+        environment:
+            {
+                POSTGRES_USER: user,
+                POSTGRES_PASSWORD: password,
+                POSTGRES_DB: distributed_db,
+            }
+        volumes: ["./db/init-db6.sql:/docker-entrypoint-initdb.d/init.sql"]
+        networks: [query_network]
+        healthcheck:
+            {
+                test: ["CMD-SHELL", "pg_isready -U user -d distributed_db"],
+                interval: 5s,
+                timeout: 5s,
+                retries: 5,
+            }
+
 networks:
     query_network:
         driver: bridge
