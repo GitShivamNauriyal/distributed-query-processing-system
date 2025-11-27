@@ -1,3 +1,4 @@
+
 -- Node 6: Sales Transactions for the second half of the year (H2)
 -- This table is partitioned by date.
 
@@ -19,3 +20,33 @@ INSERT INTO sales (sale_id, product_name, sale_amount, sale_date, customer_id, e
 (2006, 'E-Reader', 12500.00, '2024-11-15', 207, 7),
 (2007, 'Projector', 95000.00, '2024-12-05', 108, 3),
 (2008, 'Mechanical Keyboard', 11000.00, '2024-12-20', 208, 8);
+
+
+
+-- Create an audit log table
+CREATE TABLE sales_audit_log (
+    log_id SERIAL PRIMARY KEY,
+    sale_id INT,
+    action_type VARCHAR(50),
+    action_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    details TEXT
+);
+
+-- Create the function to handle updates
+CREATE OR REPLACE FUNCTION log_sale_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO sales_audit_log (sale_id, action_type, details)
+    VALUES (
+        NEW.sale_id, 
+        'UPDATE', 
+        'Updated product: ' || NEW.product_name || '. Amount changed from ' || OLD.sale_amount || ' to ' || NEW.sale_amount
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+--  Create the trigger for UPDATE events
+CREATE TRIGGER after_sale_update
+AFTER UPDATE ON sales
+FOR EACH ROW

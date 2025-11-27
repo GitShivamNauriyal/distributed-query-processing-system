@@ -16,13 +16,18 @@ class QueryServicer(query_pb2_grpc.QueryServiceServicer):
         db_host = os.getenv('DATABASE_HOST', 'localhost')
         
         # Establish the database connection when the servicer is initialized.
-        self.db_conn = psycopg2.connect(
-            host=db_host,
-            database="distributed_db",
-            user="user",
-            password="password"
-        )
-        print(f"Worker connected to database at {db_host}")
+        try:
+            self.db_conn = psycopg2.connect(
+                host=db_host,
+                database="distributed_db",
+                user="user",
+                password="password"
+            )
+            # Set autocommit to True so we don't need to manually commit every time
+            self.db_conn.autocommit = True
+            print(f"Worker connected to database at {db_host}")
+        except Exception as e:
+            print(f"Failed to connect to database: {e}")
 
     def ExecuteSubQuery(self, request, context):
         """
@@ -31,30 +36,36 @@ class QueryServicer(query_pb2_grpc.QueryServiceServicer):
         query = request.query_sql
         print(f"Received query: {query}")
         
-        results = []
         try:
             # Create a cursor to perform database operations.
             cursor = self.db_conn.cursor()
             cursor.execute(query)
             
-            # Fetch column names from the cursor description.
-            colnames = [desc[0] for desc in cursor.description]
-            
-            # Fetch all rows and format them as a list of dictionaries.
-            for row in cursor.fetchall():
-                results.append(dict(zip(colnames, row)))
+            # Check if the query returns rows (like SELECT)
+            if cursor.description:
+                # Fetch column names from the cursor description.
+                colnames = [desc[0] for desc in cursor.description]
+                
+                # Fetch all rows and format them as a list of dictionaries.
+                results = []
+                for row in cursor.fetchall():
+                    results.append(dict(zip(colnames, row)))
+                
+                result_json = json.dumps(results, indent=2, default=str)
+            else:
+                # For INSERT/UPDATE/DELETE, return the row count/status
+                # We return a list with a single object containing the status
+                result_json = json.dumps([{"status": "success", "rows_affected": cursor.rowcount}])
             
             cursor.close()
+            
+            # Return the result in the format defined by our .proto file.
+            return query_pb2.PartialResult(result_json=result_json)
+
         except Exception as e:
             print(f"An error occurred: {e}")
             # In case of an error, return an empty result with an error message.
             return query_pb2.PartialResult(result_json=json.dumps({"error": str(e)}))
-
-        # Convert the Python list of dictionaries to a JSON string.
-        result_json = json.dumps(results, indent=2, default=str)
-        
-        # Return the result in the format defined by our .proto file.
-        return query_pb2.PartialResult(result_json=result_json)
 
 def serve():
     """

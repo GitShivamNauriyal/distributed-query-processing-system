@@ -34,23 +34,31 @@ const masterClient = new queryProto.MasterService(
 // This is the endpoint our React app will call
 app.post("/query", (req, res) => {
     const { sql } = req.body
-    if (!sql) {
-        return res.status(400).json({ error: "SQL query is required." })
-    }
-
-    console.log(`Received query from frontend: ${sql}`)
-
-    // Make the gRPC call to the master node
-    masterClient.ExecuteQuery({ sql: sql }, (error, response) => {
+    // ...
+    masterClient.ExecuteQuery({ sql }, (error, response) => {
         if (error) {
-            console.error("gRPC Error:", error.details)
-            return res.status(500).json({ error: error.details })
+            // This handles gRPC network failures
+            console.error("gRPC Error:", error)
+            return res.status(500).json({ error: error.message })
         }
 
-        console.log("Received response from master node.")
-        // The response from the master contains a JSON string, so we parse it
-        const resultData = JSON.parse(response.result_json)
-        res.json(resultData)
+        // --- Check for Logic Errors from Master ---
+        if (response.error) {
+            console.error("Master Node Logic Error:", response.error_message)
+            return res.status(400).json({
+                error: true,
+                error_message: response.error_message,
+            })
+        }
+        // -----------------------------------------------
+
+        try {
+            const results = JSON.parse(response.result_json)
+            res.json(results)
+        } catch (e) {
+            console.error("JSON Parse Error:", e) // Log the parse error
+            res.status(500).json({ error: "Failed to parse master response" })
+        }
     })
 })
 
