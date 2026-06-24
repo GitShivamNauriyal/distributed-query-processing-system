@@ -27,8 +27,8 @@ function App() {
             if (!response.ok || data.error) {
                 throw new Error(
                     data.error_message ||
-                        data.error ||
-                        "An error occurred on the server."
+                    data.error ||
+                    "An error occurred on the server."
                 )
             }
             setResults(data)

@@ -7,6 +7,19 @@ from concurrent import futures
 # Import the generated gRPC classes
 from protos import query_pb2, query_pb2_grpc
 
+class AuthInterceptor(grpc.ServerInterceptor):
+    def __init__(self, key):
+        self._valid_metadata = ('authorization', key)
+
+    def intercept_service(self, continuation, handler_call_details):
+        metadata = dict(handler_call_details.invocation_metadata)
+        if metadata.get('authorization') == self._valid_metadata[1]:
+            return continuation(handler_call_details)
+        else:
+            def deny(_, context):
+                context.abort(grpc.StatusCode.UNAUTHENTICATED, 'Invalid token')
+            return grpc.unary_unary_rpc_method_handler(deny)
+
 class QueryServicer(query_pb2_grpc.QueryServiceServicer):
     """
     This class implements the gRPC service methods defined in query.proto.
@@ -34,12 +47,17 @@ class QueryServicer(query_pb2_grpc.QueryServiceServicer):
         This method is called by the master. It executes the received SQL query.
         """
         query = request.query_sql
+        params_json = request.params_json
         print(f"Received query: {query}")
+        print(f"Params: {params_json}")
         
         try:
+            # Parse parameters
+            params = json.loads(params_json) if params_json else ()
+
             # Create a cursor to perform database operations.
             cursor = self.db_conn.cursor()
-            cursor.execute(query)
+            cursor.execute(query, params)
             
             # Check if the query returns rows (like SELECT)
             if cursor.description:
@@ -72,7 +90,11 @@ def serve():
     Starts the gRPC server and listens for incoming requests.
     """
     # Create a gRPC server with a thread pool of 10 workers.
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    auth_interceptor = AuthInterceptor('super-secret-token')
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers=10),
+        interceptors=(auth_interceptor,)
+    )
     
     # Register our servicer class with the server.
     query_pb2_grpc.add_QueryServiceServicer_to_server(QueryServicer(), server)

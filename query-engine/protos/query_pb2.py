@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bquery.proto\x12\x05query\"\x1b\n\x0cQueryRequest\x12\x0b\n\x03sql\x18\x01 \x01(\t\"J\n\rQueryResponse\x12\x13\n\x0bresult_json\x18\x01 \x01(\t\x12\r\n\x05\x65rror\x18\x02 \x01(\x08\x12\x15\n\rerror_message\x18\x03 \x01(\t\"$\n\x0fSubQueryRequest\x12\x11\n\tquery_sql\x18\x01 \x01(\t\"$\n\rPartialResult\x12\x13\n\x0bresult_json\x18\x01 \x01(\t2J\n\rMasterService\x12\x39\n\x0c\x45xecuteQuery\x12\x13.query.QueryRequest\x1a\x14.query.QueryResponse2O\n\x0cQueryService\x12?\n\x0f\x45xecuteSubQuery\x12\x16.query.SubQueryRequest\x1a\x14.query.PartialResultb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bquery.proto\x12\x05query\"\x1b\n\x0cQueryRequest\x12\x0b\n\x03sql\x18\x01 \x01(\t\"J\n\rQueryResponse\x12\x13\n\x0bresult_json\x18\x01 \x01(\t\x12\r\n\x05\x65rror\x18\x02 \x01(\x08\x12\x15\n\rerror_message\x18\x03 \x01(\t\"9\n\x0fSubQueryRequest\x12\x11\n\tquery_sql\x18\x01 \x01(\t\x12\x13\n\x0bparams_json\x18\x02 \x01(\t\"$\n\rPartialResult\x12\x13\n\x0bresult_json\x18\x01 \x01(\t2J\n\rMasterService\x12\x39\n\x0c\x45xecuteQuery\x12\x13.query.QueryRequest\x1a\x14.query.QueryResponse2O\n\x0cQueryService\x12?\n\x0f\x45xecuteSubQuery\x12\x16.query.SubQueryRequest\x1a\x14.query.PartialResultb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,11 +36,11 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_QUERYRESPONSE']._serialized_start=51
   _globals['_QUERYRESPONSE']._serialized_end=125
   _globals['_SUBQUERYREQUEST']._serialized_start=127
-  _globals['_SUBQUERYREQUEST']._serialized_end=163
-  _globals['_PARTIALRESULT']._serialized_start=165
-  _globals['_PARTIALRESULT']._serialized_end=201
-  _globals['_MASTERSERVICE']._serialized_start=203
-  _globals['_MASTERSERVICE']._serialized_end=277
-  _globals['_QUERYSERVICE']._serialized_start=279
-  _globals['_QUERYSERVICE']._serialized_end=358
+  _globals['_SUBQUERYREQUEST']._serialized_end=184
+  _globals['_PARTIALRESULT']._serialized_start=186
+  _globals['_PARTIALRESULT']._serialized_end=222
+  _globals['_MASTERSERVICE']._serialized_start=224
+  _globals['_MASTERSERVICE']._serialized_end=298
+  _globals['_QUERYSERVICE']._serialized_start=300
+  _globals['_QUERYSERVICE']._serialized_end=379
 # @@protoc_insertion_point(module_scope)

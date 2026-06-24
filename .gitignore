@@ -1,1 +1,5 @@
 api-gateway/node_modules
+
+*.md
+!README.md
+
