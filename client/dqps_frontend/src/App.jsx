@@ -21,7 +21,6 @@ function App() {
 
             const data = await response.json()
 
-            // Debug Log: See exactly what the backend sent
             console.log("Frontend received:", data)
 
             if (!response.ok || data.error) {
@@ -42,7 +41,6 @@ function App() {
         }
     }
 
-    // Animation variants
     const tableVariants = {
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.03 } },
@@ -58,7 +56,6 @@ function App() {
     }
 
     const renderContent = () => {
-        // 1. Handle No Results
         if (!results || results.length === 0) {
             return (
                 <motion.div
@@ -72,8 +69,6 @@ function App() {
             )
         }
 
-        // 2. Handle Success Message (INSERT/UPDATE/DELETE)
-        // We check if the first item has a 'status' property of 'success'
         if (results[0] && results[0].status === "success") {
             console.log("success")
             return (
@@ -113,7 +108,6 @@ function App() {
             console.log("failure")
         }
 
-        // 3. Handle Standard Data Table (SELECT)
         const headers = Object.keys(results[0])
 
         return (
@@ -340,7 +334,6 @@ function App() {
                                     </div>
                                 </motion.div>
                             ) : (
-                                // Call the separate render function here
                                 renderContent()
                             )}
                         </AnimatePresence>

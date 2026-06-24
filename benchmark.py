@@ -4,15 +4,14 @@ import json
 import sys
 import os
 
-# Add path to find protos
 sys.path.append(os.path.join(os.path.dirname(__file__), 'query-engine'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'query-engine', 'protos'))
 from protos import query_pb2, query_pb2_grpc
 
 def run_query(stub, name, query, iterations=5):
     print(f"\n--- Running Benchmark: {name} ---")
     print(f"Query: {query.strip()}")
     
-    # Warm-up run (not timed for averages)
     try:
         req = query_pb2.QueryRequest(sql=query)
         stub.ExecuteQuery(req)
@@ -47,7 +46,6 @@ def run_query(stub, name, query, iterations=5):
     print(f"Iterations: {iterations}")
     print(f"Avg Time: {avg_duration:.4f}s | Min: {min_duration:.4f}s | Max: {max_duration:.4f}s")
     
-    # Legacy Simulation (2.5x multiplier)
     legacy_avg = avg_duration * 2.5
     print(f"Est. Centralized Legacy Time (Avg): {legacy_avg:.4f}s")
     print(f"Speedup Factor: {legacy_avg / avg_duration:.2f}x")
@@ -61,21 +59,18 @@ def run_benchmark():
         with grpc.insecure_channel(master_address) as channel:
             stub = query_pb2_grpc.MasterServiceStub(channel)
             
-            # Benchmark 1: Distributed Aggregation
             run_query(
                 stub,
                 "Distributed Map-Reduce Aggregation",
                 "SELECT COUNT(*) FROM sales;"
             )
             
-            # Benchmark 2: Point Query / Filtering
             run_query(
                 stub,
                 "Distributed Broadcast & Filter",
                 "SELECT * FROM sales WHERE sale_amount > 50000;"
             )
             
-            # Benchmark 3: Complex Join
             run_query(
                 stub,
                 "In-Memory Distributed Hash Join",

@@ -6,7 +6,6 @@ from concurrent import futures
 from protos import query_pb2, query_pb2_grpc
 from datetime import datetime
 
-# --- METADATA Catalog---
 METADATA = {
     'customers': {
         'partition_key': 'region',
@@ -26,7 +25,6 @@ METADATA = {
     }
 }
 
-# --- Helper Functions ---
 def extract_tables(parsed):
     return [table.name for table in parsed.find_all(exp.Table)]
 
@@ -63,7 +61,6 @@ class MasterServicer(query_pb2_grpc.MasterServiceServicer):
             parsed = sqlglot.parse_one(sql)
             plan = []
             
-            # Detect Query Type
             if isinstance(parsed, exp.Select):
                 is_join = any(parsed.find_all(exp.Join))
                 is_agg = any(parsed.find_all(exp.AggFunc))
@@ -89,7 +86,6 @@ class MasterServicer(query_pb2_grpc.MasterServiceServicer):
             print(f"FATAL ERROR in ExecuteQuery: {e}")
             return query_pb2.QueryResponse(result_json="[]", error=True, error_message=str(e))
 
-    # --- Planners ---
     def plan_simple_query(self, parsed):
         tables = extract_tables(parsed)
         if not tables: raise Exception("No table found.")
@@ -136,19 +132,16 @@ class MasterServicer(query_pb2_grpc.MasterServiceServicer):
         partition_key = METADATA[table_name]['partition_key']
         
         try:
-            # sqlglot AST parsing
             table_exp = parsed.args.get('this')
             if not table_exp or not table_exp.this:
                 raise Exception("Table not found in AST.")
             
-            # Extract columns
             columns = []
             if 'expressions' in table_exp.args:
                 columns = [col.name for col in table_exp.expressions]
             else:
                 raise Exception("Column list is required for routing.")
                 
-            # Extract values
             values_clause = parsed.expression
             if not values_clause or not isinstance(values_clause, exp.Values):
                 raise Exception("VALUES clause not found.")
@@ -190,7 +183,6 @@ class MasterServicer(query_pb2_grpc.MasterServiceServicer):
             if not target_node:
                 raise Exception(f"Could not route INSERT for {partition_key}='{partition_value}'. Available nodes: {list(nodes_map.keys())}")
                 
-            # Parameterized Query Generation
             placeholders = ', '.join(['%s'] * len(clean_values))
             col_str = ', '.join(columns)
             param_query = f"INSERT INTO {table_name} ({col_str}) VALUES ({placeholders})"
@@ -200,7 +192,6 @@ class MasterServicer(query_pb2_grpc.MasterServiceServicer):
         except Exception as e:
              raise Exception(f"Error planning INSERT: {e}")
 
-    # --- Execution Coordinator ---
     def execute_plan(self, plan):
         context_data = {}
         final_result = []
